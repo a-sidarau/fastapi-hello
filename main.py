@@ -1,9 +1,16 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+
 from pydantic import BaseModel
 from enum import Enum
 
 app = FastAPI()
+
+# Монтируем папку статичных файлов и создаём сущность для шаблонов Jinja2
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 
 class ModelName(str, Enum):
@@ -36,8 +43,16 @@ books = [
 
 
 @app.get("/")
-async def root():
-    return {"message": "Hello, world!!!!!!"}
+async def root(request: Request):
+    # словарь контекста, через который можно передать переменные в шаблон
+    context = {
+        "request": request,
+        "title": "Index PAge",
+        "cate_name": "Leopold"
+    }
+    # return templates.TemplateResponse("index.html", {"request": request})
+    # в ответ на запрос возвращаем определённый шаблон с переданным контекстом
+    return templates.TemplateResponse("index.html", context)
 
 
 @app.get("/books")
