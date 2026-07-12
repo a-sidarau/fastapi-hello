@@ -3,10 +3,19 @@ from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
+# стандартные респонсы  можно менять на кастомные
+from fastapi.responses import HTMLResponse # для возврата прямого хтмл
+
 from pydantic import BaseModel
 from enum import Enum
 
+from dotenv import load_dotenv
+
+# создаём инстанс фастапи
 app = FastAPI()
+
+# загружаем переменные окружения из .env файла
+load_dotenv()
 
 # Монтируем папку статичных файлов и создаём сущность для шаблонов Jinja2
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -48,16 +57,27 @@ async def root(request: Request):
     context = {
         "request": request,
         "title": "Index PAge",
-        "cate_name": "Leopold"
+        "cat_name": "Leopold"
     }
     # return templates.TemplateResponse("index.html", {"request": request})
     # в ответ на запрос возвращаем определённый шаблон с переданным контекстом
     return templates.TemplateResponse("index.html", context)
 
-
-@app.get("/books")
-def show_books():
-    return books
+# eсли хотим возвращать хтмл напрямую, нужно подключить специальный класс
+@app.get("/books", response_class=HTMLResponse)
+def get_books():
+    html_content = """
+    <html>
+        <head>
+            <title>Books</title>
+        </head>
+        <body>
+            <h1>Books</h1>
+            <p>The list of all indexes from library</p>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 @app.get("/books/{book_id}")
@@ -66,21 +86,6 @@ def get_book(book_id: int):
         if book["id"] == book_id:
             return book
     return None
-
-
-@app.get("/models/{model_name}")
-async def get_model(model_name: ModelName):
-    # Можно создать класс enum и фастапи сможет подтягивать все значения
-    # экземпляра данного класса. В доке можно будет увидеть все значения,
-    # которые будет принимать функция
-    if model_name is ModelName.model_alexnet:  # можно выбирать значения напрямую из класса
-        return {"model_name": model_name, "message": "Deep Learning Model alnt"}
-
-    if model_name.value == "lenet":  # можно указывать значение через атрибут value
-        return {"model_name": model_name, "message": "LeCNN all the images"}
-
-    return {"model_name": model_name, "message": "Have some residuals"}
-
 
 # >>>> File paths
 # чтобы считывать пути из ссылок, нужно после переменной указать
@@ -101,7 +106,9 @@ async def get_items(skip: int = 0, limit: int = 10):
 
 @app.get("/items/{item_id}")
 async def read_item(
-    item_id: str, q: str | None = None, short: bool = False
+    item_id: str,
+    q: str | None = None,
+    short: bool = False
 ):  # q - пример опционального параметра
     item = {"item_id": item_id}  # short - bool квери-параметр
     if q:

@@ -3,10 +3,10 @@
 <head>
 	<meta charset="UTF-8">
 	<link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
-	<title>Index page</title>
+	<title>{{ title }}</title>
 </head>
 <body>
     <h1>Index page for FastAPI application</h1>
-    <p>Just a placeholder</p>
+    <p>My cat's name is {{ cat_name }}</p>
 </body>
 </html>
